@@ -1,0 +1,31 @@
+name: test
+
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15  # Set to your Postgres version
+        ports: ["5432:5432/tcp"]
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+
+    steps:
+    - run: sudo apt update && sudo apt install libpq-dev
+    - uses: actions/checkout@v4
+    - name: Install uv
+      uses: astral-sh/setup-uv@v2
+    - name: Set up Python
+      run: uv python install
+    - run: |
+        uv run plain build
+        uv run plain test
+      env:
+        PLAIN_DEBUG: true
+        PLAIN_SECRET_KEY: testing
+        DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
